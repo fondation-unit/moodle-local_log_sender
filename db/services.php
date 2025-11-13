@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Task schedule configuration for the local_log_sender plugin.
+ * Resource external functions and service definitions.
  *
  * @package   local_log_sender
  * @copyright 2025 Pierre Duverneix {@link https://github.com/Hipjea}
@@ -24,14 +24,22 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$tasks = [
-    [
-        'classname' => 'local_log_sender\task\send_log',
-        'blocking' => 0,
-        'minute' => '*/2',
-        'hour' => '*',
-        'day' => '*',
-        'month' => '*',
-        'dayofweek' => '*',
+$functions = [
+    'local_log_sender_receive_lrs_response' => [
+        'classname'   => 'local_log_sender_external',
+        'methodname'  => 'receive_lrs_response',
+        'classpath'   => 'local/log_sender/externallib.php',
+        'description' => 'Receives a response from the LRS server and processes it.',
+        'type'        => 'write',
+        'ajax'        => true,
+        'services'    => ['log_sender_service']
     ],
+];
+
+$services = [
+    'log_sender_service' => [
+        'functions' => ['local_log_sender_receive_lrs_response'],
+        'restrictedusers' => 0,
+        'enabled' => 1
+    ]
 ];

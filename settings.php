@@ -32,10 +32,19 @@ if ($hassiteconfig) {
 
     // Configure the remote log endpoint
     $settings->add(new admin_setting_configtext(
-        'local_log_sender/endpoint_url',
-        get_string('settings:endpoint_url', 'local_log_sender'),
-        get_string('settings:endpoint_url_desc', 'local_log_sender'),
-        'http://localhost:8089/moodle_log',
+        'local_log_sender/moodle_log_endpoint_url',
+        get_string('settings:moodle_log_endpoint_url', 'local_log_sender'),
+        get_string('settings:moodle_log_endpoint_url_desc', 'local_log_sender'),
+        'http://host.docker.internal:8080/moodle_log',
+        PARAM_URL
+    ));
+
+    // Configure the remote log endpoint
+    $settings->add(new admin_setting_configtext(
+        'local_log_sender/user_report_endpoint_url',
+        get_string('settings:user_report_endpoint_url', 'local_log_sender'),
+        get_string('settings:user_report_endpoint_url_desc', 'local_log_sender'),
+        'http://host.docker.internal:8080/user_report',
         PARAM_URL
     ));
 
@@ -49,6 +58,15 @@ if ($hassiteconfig) {
         get_string('settings:log_targets_desc', 'local_log_sender'),
         $defaulttargets,
         $targets
+    ));
+
+    // LRS token
+    $settings->add(new admin_setting_configtext(
+        'local_log_sender/lrs_callback_token',
+        get_string('settings:lrs_callback_token', 'local_log_sender'),
+        get_string('settings:lrs_callback_token_desc', 'local_log_sender'),
+        '',
+        PARAM_ALPHANUMEXT
     ));
 
     $ADMIN->add('localplugins', $settings);

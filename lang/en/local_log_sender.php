@@ -24,7 +24,12 @@
 
 $string['pluginname'] = 'Log Sender';
 $string['send_log_task'] = 'Send log task';
-$string['settings:endpoint_url'] = 'LRS endpoint URL';
-$string['settings:endpoint_url_desc'] = 'Full URL of the external LRS endpoint receiving Moodle logs.';
+$string['request_report'] = 'Request report task';
+$string['settings:moodle_log_endpoint_url'] = 'LRS endpoint URL to post Moodle logs';
+$string['settings:moodle_log_endpoint_url_desc'] = 'Full URL of the external LRS endpoint receiving Moodle logs.';
+$string['settings:user_report_endpoint_url'] = 'LRS endpoint URL to request a user\'s report';
+$string['settings:user_report_endpoint_url_desc'] = 'Full URL of the external LRS endpoint retrieving the user report.';
 $string['settings:log_targets'] = 'Targeted log components';
 $string['settings:log_targets_desc'] = 'The target components of the log that must be accounted for in reports.';
+$string['settings:lrs_callback_token'] = 'LRS callback authentication token';
+$string['settings:lrs_callback_token_desc'] = 'Shared secret token used to authenticate incoming callback requests from the external LRS server.';

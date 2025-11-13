@@ -119,7 +119,7 @@ class send_log extends \core\task\scheduled_task {
      * @return mixed Response content or false on failure
      */
     private function post_logs_batch(array $logs) {
-        $endpoint = get_config('local_log_sender', 'endpoint_url');
+        $endpoint = get_config('local_log_sender', 'moodle_log_endpoint_url');
         if (empty($endpoint)) {
             mtrace("Error: endpoint_url is not configured in admin settings.");
             return false;
