@@ -49,13 +49,19 @@ class request_report extends \core\task\adhoc_task {
      * Sends the userid to the LRS server via POST
      */
     private function send_to_lrs(int $userid): void {
+        global $CFG;
+
         $endpoint = get_config('local_log_sender', 'user_report_endpoint_url');
         if (empty($endpoint)) {
             mtrace("Error: endpoint_url is not configured in admin settings.");
             return;
         }
 
-        $payload = json_encode(['userid' => $userid]);
+        $payload = json_encode([
+            'token' => get_config('local_log_sender', 'lrs_callback_token'),
+            'userid' => $userid,
+            'callbackurl' => $CFG->wwwroot . '/local/log_sender/callback.php'
+        ]);
 
         $curl = new \curl();
         $options = [
@@ -63,7 +69,7 @@ class request_report extends \core\task\adhoc_task {
             'CURLOPT_POSTFIELDS' => $payload,
             'CURLOPT_HTTPHEADER' => ['Content-Type: application/json'],
             'CURLOPT_RETURNTRANSFER' => true,
-            'CURLOPT_TIMEOUT' => 30, // adjust as needed
+            'CURLOPT_TIMEOUT' => 30,
         ];
 
         $response = $curl->post($endpoint, $payload, $options);

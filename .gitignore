@@ -472,4 +472,6 @@ composer.lock
 *.sass.map
 *.scss.map
 
+##### Custom
 test.php
+lrs_callback.json
