@@ -49,7 +49,7 @@ if ($hassiteconfig) {
     ));
 
     // Log targets
-    $targets = get_log_targets();
+    $targets = log_sender_get_log_targets();
     $defaulttargets = array_keys($targets);
 
     $settings->add(new admin_setting_configmultiselect(

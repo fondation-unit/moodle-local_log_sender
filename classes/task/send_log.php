@@ -26,7 +26,7 @@ namespace local_log_sender\task;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once(dirname(__FILE__) . '/../../locallib.php');
+require_once(__DIR__ . '/../../locallib.php');
 
 class send_log extends \core\task\scheduled_task {
     public function get_name() {
@@ -34,65 +34,68 @@ class send_log extends \core\task\scheduled_task {
     }
 
     public function execute() {
-        $lastsent = (int) get_config('local_log_sender', 'last_sent_id', 0);
-        $limit = 50;
+        $batchsize = 50; // Send 50 logs per HTTP request
+        $maxbatches = 20; // Max 50 * 20 logs per run
 
         $lockfactory = \core\lock\lock_config::get_lock_factory('local_log_sender');
-        $lock = $lockfactory->get_lock('send_log_lock', 10);
+        $lock = $lockfactory->get_lock('send_log_lock', 60);
 
         if (!$lock) {
-            mtrace("Another instance of send_log is already running. Skipping this run.");
+            mtrace("Already running, skip.");
             return;
         }
 
         try {
-            do {
-                $logs = $this->get_last_logs($lastsent, $limit);
-                $count = count($logs);
+            $lastsent = (int) get_config('local_log_sender', 'last_sent_id') ?: 0;
+            $batchcount = 0;
 
-                if ($count === 0) {
-                    mtrace("No new logs to send.");
+            while ($batchcount < $maxbatches) {
+                $logs = $this->get_next_logs($lastsent, $batchsize);
+
+                if (empty($logs)) {
+                    mtrace("No more logs to send.");
                     break;
                 }
 
-                mtrace("Sending batch of {$count} logs as array...");
+                mtrace("Sending batch of " . count($logs) . " logs (starting from ID {$logs[0]->id})...");
 
-                $response = $this->post_logs_batch($logs);
+                // Send entire batch in ONE request
+                $success = $this->post_logs_batch($logs);
 
-                if ($response === false) {
-                    mtrace("Batch failed to send.");
+                if (!$success) {
+                    mtrace("Error sending batch, stopping. Will retry from ID " . ($lastsent + 1));
                     break;
                 }
 
-                mtrace("Batch sent successfully.");
+                // Update last_sent_id ONCE per batch (not per log!)
+                $lastsent = (int) end($logs)->id;
+                set_config('last_sent_id', $lastsent, 'local_log_sender');
 
-                // Update last_sent_id to the last log in the batch
-                $lastlog = end($logs);
-                $lastlogid = $lastlog->id;
-                set_config('last_sent_id', $lastlogid, 'local_log_sender');
-                mtrace("Updated last_sent_id to: " . userdate($lastlogid));
-            } while ($count === $limit);
+                mtrace("✓ Batch sent successfully. Last ID: {$lastsent}");
+                $batchcount++;
+            }
+
+            if ($batchcount >= $maxbatches) {
+                mtrace("Reached max batches ({$maxbatches}), will continue in next run.");
+            }
         } finally {
             $lock->release();
         }
     }
 
-    private function get_last_logs($lastsent, $limit) {
+    private function get_next_logs($lastid, $limit) {
         global $DB;
 
-        $allowedtargets = get_allowed_log_targets();
-
-        // Build SQL filter for allowed targets if any are configured
+        $allowedtargets = log_sender_get_allowed_log_targets();
+        $params = ['lastid' => $lastid];
         $targetfilter = '';
-        $params = ['lastid' => $lastsent];
 
         if (!empty($allowedtargets)) {
-            list($targetsql, $targetparams) = $DB->get_in_or_equal($allowedtargets, SQL_PARAMS_NAMED, 'target');
+            list($targetsql, $targetparams) = $DB->get_in_or_equal($allowedtargets, SQL_PARAMS_NAMED, 'tgt');
             $targetfilter = " AND target $targetsql";
-            $params = array_merge($params, $targetparams);
+            $params += $targetparams;
         }
 
-        // Fetch logs
         $logs = $DB->get_records_select(
             'logstore_standard_log',
             "id > :lastid AND userid IS NOT NULL AND userid <> 0 $targetfilter",
@@ -103,10 +106,20 @@ class send_log extends \core\task\scheduled_task {
             $limit
         );
 
+        if (empty($logs)) {
+            return [];
+        }
+
+        // Get all users in ONE query
+        $userids = array_unique(array_column($logs, 'userid'));
+        list($usersql, $userparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        $users = $DB->get_records_select('user', "id $usersql", $userparams, '', 'id,email,username');
+
+        // Attach additional user data
         foreach ($logs as $log) {
-            $user = $DB->get_record('user', ['id' => $log->userid], 'id, email, username');
+            $user = $users[$log->userid] ?? null;
             $log->useremail = $user->email ?? null;
-            $log->username = $user->username ?? null;
+            $log->username  = $user->username ?? null;
         }
 
         return array_values($logs);
@@ -120,31 +133,35 @@ class send_log extends \core\task\scheduled_task {
      */
     private function post_logs_batch(array $logs) {
         $endpoint = get_config('local_log_sender', 'moodle_log_endpoint_url');
-        if (empty($endpoint)) {
-            mtrace("Error: endpoint_url is not configured in admin settings.");
+
+        if (!$endpoint) {
+            mtrace("No endpoint configured.");
             return false;
         }
 
-        $payload = json_encode(array_values($logs));
+        // Send as JSON array
+        $payload = json_encode($logs);
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $endpoint);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt_array($ch, [
+            CURLOPT_URL            => $endpoint,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 30, // Important: add timeout
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json']
+        ]);
 
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $err = curl_error($ch);
+        $code     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err      = curl_error($ch);
         curl_close($ch);
 
-        if ($err || $httpCode < 200 || $httpCode >= 300) {
-            mtrace("Error sending batch: " . ($err ?: "HTTP $httpCode"));
-            mtrace("Response: " . $response);
+        if ($err || $code < 200 || $code >= 300) {
+            mtrace("HTTP error: " . ($err ?: "HTTP $code - Response: " . substr($response, 0, 200)));
             return false;
         }
 
-        return $response;
+        return true;
     }
 }

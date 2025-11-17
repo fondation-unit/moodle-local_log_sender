@@ -26,7 +26,7 @@
  *
  * @return Array of string
  */
-function get_log_targets() {
+function log_sender_get_log_targets() {
     global $DB;
 
     $records = $DB->get_records_sql('SELECT DISTINCT target FROM {logstore_standard_log}');
@@ -38,14 +38,14 @@ function get_log_targets() {
  *
  * @return string[] List of allowed targets.
  */
-function get_allowed_log_targets(): array {
+function log_sender_get_allowed_log_targets(): array {
     $config = trim(get_config('local_log_sender', 'log_targets') ?? '');
     if ($config === '') {
         return [];
     }
 
     $allowed = array_map('trim', explode(',', $config));
-    $all = get_log_targets();
+    $all = log_sender_get_log_targets();
 
     return array_values(array_intersect($all, $allowed));
 }

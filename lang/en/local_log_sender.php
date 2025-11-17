@@ -33,3 +33,6 @@ $string['settings:log_targets'] = 'Targeted log components';
 $string['settings:log_targets_desc'] = 'The target components of the log that must be accounted for in reports.';
 $string['settings:lrs_callback_token'] = 'LRS callback authentication token';
 $string['settings:lrs_callback_token_desc'] = 'Shared secret token used to authenticate incoming callback requests from the external LRS server.';
+$string['time_report'] = 'Time report';
+$string['messageprovider:report_created'] = 'Report created';
+$string['messageprovider:report_creation'] = 'Report creation';
