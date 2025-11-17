@@ -34,7 +34,7 @@ class send_log extends \core\task\scheduled_task {
     }
 
     public function execute() {
-        $lastsent = (int) get_config('local_log_sender', 'last_sent', 0);
+        $lastsent = (int) get_config('local_log_sender', 'last_sent_id', 0);
         $limit = 50;
 
         $lockfactory = \core\lock\lock_config::get_lock_factory('local_log_sender');
@@ -66,11 +66,11 @@ class send_log extends \core\task\scheduled_task {
 
                 mtrace("Batch sent successfully.");
 
-                // Update last_sent to the last log in the batch
+                // Update last_sent_id to the last log in the batch
                 $lastlog = end($logs);
-                $lastsent = $lastlog->timecreated;
-                set_config('last_sent', $lastsent, 'local_log_sender');
-                mtrace("Updated last_sent to: " . userdate($lastsent));
+                $lastlogid = $lastlog->id;
+                set_config('last_sent_id', $lastlogid, 'local_log_sender');
+                mtrace("Updated last_sent_id to: " . userdate($lastlogid));
             } while ($count === $limit);
         } finally {
             $lock->release();
@@ -84,7 +84,7 @@ class send_log extends \core\task\scheduled_task {
 
         // Build SQL filter for allowed targets if any are configured
         $targetfilter = '';
-        $params = ['last' => $lastsent];
+        $params = ['lastid' => $lastsent];
 
         if (!empty($allowedtargets)) {
             list($targetsql, $targetparams) = $DB->get_in_or_equal($allowedtargets, SQL_PARAMS_NAMED, 'target');
@@ -95,9 +95,9 @@ class send_log extends \core\task\scheduled_task {
         // Fetch logs
         $logs = $DB->get_records_select(
             'logstore_standard_log',
-            "timecreated > :last AND userid IS NOT NULL AND userid <> 0 $targetfilter",
+            "id > :lastid AND userid IS NOT NULL AND userid <> 0 $targetfilter",
             $params,
-            'timecreated ASC',
+            'id ASC',
             '*',
             0,
             $limit

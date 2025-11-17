@@ -474,4 +474,5 @@ composer.lock
 
 ##### Custom
 test.php
+feed.php
 lrs_callback.json
