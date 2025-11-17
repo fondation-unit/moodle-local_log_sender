@@ -15,15 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
+ * Time Report tool plugin's access file.
  *
  * @package   local_log_sender
  * @copyright 2025 Pierre Duverneix {@link https://github.com/Hipjea}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+defined('MOODLE_INTERNAL') || die;
 
-$plugin->component = 'local_log_sender'; // Full name of the plugin (used for diagnostics).
-$plugin->version  = 2025111705;          // The current module version (Date: YYYYMMDDXX).
-$plugin->requires = 2023100903;          // Requires this Moodle version.
+$capabilities = array(
+    'local/log_sender:view' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array(
+            'editingteacher' => CAP_ALLOW,
+        )
+    ),
+);

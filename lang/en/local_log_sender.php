@@ -36,3 +36,4 @@ $string['settings:lrs_callback_token_desc'] = 'Shared secret token used to authe
 $string['time_report'] = 'Time report';
 $string['messageprovider:report_created'] = 'Report created';
 $string['messageprovider:report_creation'] = 'Report creation';
+$string['period'] = 'Period';
