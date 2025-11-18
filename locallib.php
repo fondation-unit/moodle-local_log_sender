@@ -49,3 +49,140 @@ function log_sender_get_allowed_log_targets(): array {
 
     return array_values(array_intersect($all, $allowed));
 }
+
+/**
+ * Send notification to user
+ */
+function log_sender_report_notification($user, $file, $requestor, $fullmessage, $smallmessage) {
+    $fullname = fullname($user);
+    $contexturl = new moodle_url('/local/log_sender/report.php', array('userid' => $user->id));
+
+    $message = new \core\message\message();
+    $message->component = 'local_log_sender';
+    $message->name = 'reportcreation';
+    $message->userfrom = \core_user::get_noreply_user();
+    $message->userto = $requestor;
+    $message->subject = get_string('messageprovider:report_creation', 'local_log_sender') . " : " . $fullname;
+    $message->fullmessageformat = FORMAT_HTML;
+    $message->fullmessage = html_to_text($fullmessage);
+    $message->fullmessagehtml = $fullmessage;
+    $message->smallmessage = $smallmessage;
+    $message->notification = 1;
+    $message->contexturl = $contexturl;
+    $message->contexturlname = get_string('time_report', 'local_log_sender');
+    // Set the file attachment.
+    if ($file) {
+        $message->attachment = $file;
+    }
+
+    message_send($message);
+}
+
+/**
+ * Generates a snake cased username.
+ *
+ * @param  string $str
+ * @param  string $glue (optional)
+ * @return string
+ */
+function log_sender_str_to_snake_case($str, $glue = '_') {
+    $str = preg_replace('/\s+/', '', $str);
+    return ltrim(
+        preg_replace_callback('/[A-Z]/', function ($matches) use ($glue) {
+            return $glue . strtolower($matches[0]);
+        }, $str),
+        $glue
+    );
+}
+
+/**
+ * Generates the filename.
+ *
+ * @param  string $startdate
+ * @param  string $enddate
+ * @return string
+ */
+function log_sender_generate_file_name($username, $startdate, $enddate) {
+    if (!$username) {
+        throw new \coding_exception('Missing username');
+    }
+    return strtolower(get_string('report', 'core'))
+        . '__' . log_sender_str_to_snake_case($username)
+        . '__' . $startdate . '_' . $enddate . '.csv';
+}
+
+function log_sender_create_csv($user, $requestorid, $data, $contextid, $startdate, $enddate) {
+    global $CFG;
+    require_once($CFG->libdir . '/csvlib.class.php');
+    require_once(dirname(__FILE__) . '/../../locallib.php');
+
+    $strstartdate = date('d-m-Y', $startdate);
+    $strenddate = date('d-m-Y', $enddate);
+
+    // Generate CSV from data
+    $delimiter = \csv_import_reader::get_delimiter('comma');
+    $csventries = array(array());
+
+    // Add header information
+    $csventries[] = array(get_string('name', 'core'), $user->lastname);
+    $csventries[] = array(get_string('firstname', 'core'), $user->firstname);
+    $csventries[] = array(get_string('email', 'core'), $user->email);
+    $csventries[] = array(get_string('period', 'tool_time_report'), $strstartdate . ' - ' . $strenddate);
+    $csventries[] = array(get_string('period_total_time', 'tool_time_report'), 0);
+    $csventries[] = array('Date', get_string('total_duration', 'tool_time_report'));
+
+    $returnstr = '';
+    $len = count($data);
+    $shift = count($csventries);
+
+    for ($i = 0; $i < $len; $i++) {
+        $csventries[$i + $shift] = $data[$i];
+    }
+
+    foreach ($csventries as $entry) {
+        $returnstr .= '"' . implode('"' . $delimiter . '"', $entry) . '"' . "\n";
+    }
+
+    $filename = log_sender_generate_file_name(fullname($user), $strstartdate, $strenddate);
+
+    return log_sender_write_new_file($returnstr, $contextid, $filename, $user, $requestorid);
+}
+
+function log_sender_write_new_file($content, $contextid, $filename, $user, $requestorid) {
+    global $CFG;
+
+    $fs = get_file_storage();
+    $fileinfo = array(
+        'contextid' => $contextid,
+        'component' => 'tool_time_report',
+        'filearea' => 'content',
+        'itemid' => 0,
+        'filepath' => '/',
+        'filename' => $filename,
+        'userid' => $user->id
+    );
+
+    $file = $fs->get_file(
+        $fileinfo['contextid'],
+        $fileinfo['component'],
+        $fileinfo['filearea'],
+        $fileinfo['itemid'],
+        $fileinfo['filepath'],
+        $fileinfo['filename']
+    );
+
+    if ($file) {
+        $file->delete(); // Delete the old file first.
+    }
+
+    if ($fs->create_file_from_string($fileinfo, $content)) {
+        $path = "$CFG->wwwroot/pluginfile.php/$contextid/tool_time_report/content/0/$filename";
+        $fullmessage = "<p>" . get_string('download', 'core') . " : ";
+        $fullmessage .= "<a href=\"$path\" download><i class=\"fa fa-download\"></i>$filename</a></p>";
+        $smallmessage = get_string('messageprovider:report_created', 'tool_time_report');
+
+        log_sender_report_notification($user, $file, $requestorid, $fullmessage, $smallmessage);
+    }
+
+    return $file;
+}
