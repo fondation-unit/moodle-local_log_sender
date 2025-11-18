@@ -78,7 +78,7 @@ if (!$userid) {
 }
 
 // Create new file
-$file = log_sender_create_csv($user, $requestorid, $payload, $contextid, $startdate, $enddate);
+$file = log_sender_create_csv($user, $requestorid, $payload, $startdate, $enddate);
 
 if ($file) {
     // Send notification if requestor is specified

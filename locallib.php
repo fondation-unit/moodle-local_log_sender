@@ -111,7 +111,7 @@ function log_sender_generate_file_name($username, $startdate, $enddate) {
         . '__' . $startdate . '_' . $enddate . '.csv';
 }
 
-function log_sender_create_csv($user, $requestorid, $data, $contextid, $startdate, $enddate) {
+function log_sender_create_csv($user, $requestorid, $data, $startdate, $enddate) {
     global $CFG;
     require_once($CFG->libdir . '/csvlib.class.php');
     require_once(dirname(__FILE__) . '/../../locallib.php');
@@ -145,11 +145,14 @@ function log_sender_create_csv($user, $requestorid, $data, $contextid, $startdat
 
     $filename = log_sender_generate_file_name(fullname($user), $strstartdate, $strenddate);
 
-    return log_sender_write_new_file($returnstr, $contextid, $filename, $user, $requestorid);
+    return log_sender_write_new_file($returnstr, $filename, $user, $requestorid);
 }
 
-function log_sender_write_new_file($content, $contextid, $filename, $user, $requestorid) {
+function log_sender_write_new_file($content, $filename, $user, $requestorid) {
     global $CFG;
+
+    $context = context_system::instance();
+    $contextid = $context->id;
 
     $fs = get_file_storage();
     $fileinfo = array(
