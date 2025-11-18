@@ -3,7 +3,8 @@
 define('NO_MOODLE_COOKIES', true);
 define('NO_DEBUG_DISPLAY', true);
 
-require(__DIR__ . '/../../config.php');
+require(dirname(__FILE__) . '/../../config.php');
+require_once(dirname(__FILE__) . '/locallib.php');
 require_once($CFG->libdir . '/csvlib.class.php');
 
 header('Content-Type: application/json');
