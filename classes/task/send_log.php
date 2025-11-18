@@ -59,7 +59,7 @@ class send_log extends \core\task\scheduled_task {
 
                 mtrace("Sending batch of " . count($logs) . " logs (starting from ID {$logs[0]->id})...");
 
-                // Send entire batch in ONE request
+                // Send entire batch in one request
                 $success = $this->post_logs_batch($logs);
 
                 if (!$success) {
@@ -67,7 +67,7 @@ class send_log extends \core\task\scheduled_task {
                     break;
                 }
 
-                // Update last_sent_id ONCE per batch (not per log!)
+                // Update last_sent_id once per batch
                 $lastsent = (int) end($logs)->id;
                 set_config('last_sent_id', $lastsent, 'local_log_sender');
 
@@ -148,7 +148,7 @@ class send_log extends \core\task\scheduled_task {
             CURLOPT_POST           => true,
             CURLOPT_POSTFIELDS     => $payload,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 30, // Important: add timeout
+            CURLOPT_TIMEOUT        => 30, // Add timeout
             CURLOPT_HTTPHEADER     => ['Content-Type: application/json']
         ]);
 

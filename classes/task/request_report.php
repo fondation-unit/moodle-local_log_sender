@@ -35,13 +35,6 @@ class request_report extends \core\task\adhoc_task {
 
     public function execute(): void {
         $data = $this->get_custom_data();
-
-        $requestorid = $data->requestorid;
-        $userid      = $data->userid;
-        $username    = $data->username;
-        $contextid   = $data->contextid;
-        $reportfiles = $data->reportfiles;
-
         if (empty($data->userid)) {
             mtrace('Missing userid');
         }
