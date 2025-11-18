@@ -114,7 +114,6 @@ function log_sender_generate_file_name($username, $startdate, $enddate) {
 function log_sender_create_csv($user, $requestorid, $data, $startdate, $enddate) {
     global $CFG;
     require_once($CFG->libdir . '/csvlib.class.php');
-    require_once(dirname(__FILE__) . '/../../locallib.php');
 
     $strstartdate = date('d-m-Y', $startdate);
     $strenddate = date('d-m-Y', $enddate);
@@ -127,16 +126,17 @@ function log_sender_create_csv($user, $requestorid, $data, $startdate, $enddate)
     $csventries[] = array(get_string('name', 'core'), $user->lastname);
     $csventries[] = array(get_string('firstname', 'core'), $user->firstname);
     $csventries[] = array(get_string('email', 'core'), $user->email);
-    $csventries[] = array(get_string('period', 'tool_time_report'), $strstartdate . ' - ' . $strenddate);
-    $csventries[] = array(get_string('period_total_time', 'tool_time_report'), 0);
-    $csventries[] = array('Date', get_string('total_duration', 'tool_time_report'));
+    $csventries[] = array(get_string('period', 'local_log_sender'), $strstartdate . ' - ' . $strenddate);
+    $csventries[] = array(get_string('period_total_time', 'local_log_sender'), 0);
+    $csventries[] = array('Date', get_string('total_duration', 'local_log_sender'));
 
     $returnstr = '';
     $len = count($data);
     $shift = count($csventries);
 
     for ($i = 0; $i < $len; $i++) {
-        $csventries[$i + $shift] = $data[$i];
+        $obj = $data[$i]; // stdClass with date and duration
+        $csventries[$i + $shift] = array($obj->date, $obj->duration);
     }
 
     foreach ($csventries as $entry) {
@@ -157,7 +157,7 @@ function log_sender_write_new_file($content, $filename, $user, $requestorid) {
     $fs = get_file_storage();
     $fileinfo = array(
         'contextid' => $contextid,
-        'component' => 'tool_time_report',
+        'component' => 'local_log_sender',
         'filearea' => 'content',
         'itemid' => 0,
         'filepath' => '/',
@@ -179,12 +179,10 @@ function log_sender_write_new_file($content, $filename, $user, $requestorid) {
     }
 
     if ($fs->create_file_from_string($fileinfo, $content)) {
-        $path = "$CFG->wwwroot/pluginfile.php/$contextid/tool_time_report/content/0/$filename";
+        $path = "$CFG->wwwroot/pluginfile.php/$contextid/local_log_sender/content/0/$filename";
         $fullmessage = "<p>" . get_string('download', 'core') . " : ";
         $fullmessage .= "<a href=\"$path\" download><i class=\"fa fa-download\"></i>$filename</a></p>";
-        $smallmessage = get_string('messageprovider:report_created', 'tool_time_report');
-
-        log_sender_report_notification($user, $file, $requestorid, $fullmessage, $smallmessage);
+        $smallmessage = get_string('messageprovider:report_created', 'local_log_sender');
     }
 
     return $file;
