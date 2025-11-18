@@ -178,12 +178,7 @@ function log_sender_write_new_file($content, $filename, $user, $requestorid) {
         $file->delete(); // Delete the old file first.
     }
 
-    if ($fs->create_file_from_string($fileinfo, $content)) {
-        $path = "$CFG->wwwroot/pluginfile.php/$contextid/local_log_sender/content/0/$filename";
-        $fullmessage = "<p>" . get_string('download', 'core') . " : ";
-        $fullmessage .= "<a href=\"$path\" download><i class=\"fa fa-download\"></i>$filename</a></p>";
-        $smallmessage = get_string('messageprovider:report_created', 'local_log_sender');
-    }
+    $fs->create_file_from_string($fileinfo, $content);
 
     return $file;
 }

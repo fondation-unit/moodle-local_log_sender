@@ -84,7 +84,13 @@ if ($file) {
     // Send notification if requestor is specified
     if ($requestorid && $requestorid != $userid) {
         $requestor = $DB->get_record('user', ['id' => $requestorid]);
+
         if ($requestor) {
+            $path = "$CFG->wwwroot/pluginfile.php/$contextid/local_log_sender/content/0/$filename";
+            $fullmessage = "<p>" . get_string('download', 'core') . " : ";
+            $fullmessage .= "<a href=\"$path\" download><i class=\"fa fa-download\"></i>$filename</a></p>";
+            $smallmessage = get_string('messageprovider:report_created', 'local_log_sender');
+
             log_sender_report_notification($user, $file, $requestor, $fullmessage, $smallmessage);
         }
     }
@@ -92,7 +98,7 @@ if ($file) {
     http_response_code(200);
     echo json_encode([
         'status' => 'success',
-        'file' => $filename,
+        'file' => $file->get_filename(),
         'download_url' => $path
     ]);
 } else {
