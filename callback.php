@@ -78,7 +78,7 @@ $requestor = $DB->get_record('user', ['id' => $requestorid]);
 $startdate = $data->startdate ?? null;
 $enddate = $data->enddate ?? time();
 
-if (!$startdated) {
+if (!$startdate) {
     http_response_code(400);
     echo json_encode(['error' => 'Missing startdate']);
     exit;
