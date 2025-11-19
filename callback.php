@@ -64,16 +64,23 @@ if (is_string($payload)) {
 }
 
 // Extract metadata from payload
-$userid = 2;
-$requestorid = 32;
+$userid = $data->userid ?? null;
+$requestorid = $data->requestorid ?? null;
+
+if (!$userid || !$requestorid) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing userid or requestorid']);
+    exit;
+}
+
 $user = $DB->get_record('user', ['id' => $userid], '*', MUST_EXIST);
 $requestor = $DB->get_record('user', ['id' => $requestorid]);
-$startdate = $data->startdate ?? 1731860711;
-$enddate = $data->enddate ?? 1763396714;
+$startdate = $data->startdate ?? null;
+$enddate = $data->enddate ?? time();
 
-if (!$userid) {
+if (!$startdated) {
     http_response_code(400);
-    echo json_encode(['error' => 'Missing userid']);
+    echo json_encode(['error' => 'Missing startdate']);
     exit;
 }
 
@@ -81,24 +88,24 @@ if (!$userid) {
 $file = log_sender_create_csv($user, $requestorid, $payload, $startdate, $enddate);
 
 if ($file) {
+    $filename = $file->get_filename();
+    $context = context_system::instance();
+    $contextid = $context->id;
+
     // Send notification if requestor is specified
-    if ($requestorid && $requestorid != $userid) {
-        $requestor = $DB->get_record('user', ['id' => $requestorid]);
+    if ($requestor && $requestor->id != $user->id) {
+        $filepath = "$CFG->wwwroot/pluginfile.php/$contextid/local_log_sender/content/0/$filename";
+        $fullmessage = "<p>" . get_string('download', 'core') . " : ";
+        $fullmessage .= "<a href=\"$filepath\" download><i class=\"fa fa-download\"></i>$filename</a></p>";
+        $smallmessage = get_string('messageprovider:report_created', 'local_log_sender');
 
-        if ($requestor) {
-            $path = "$CFG->wwwroot/pluginfile.php/$contextid/local_log_sender/content/0/$filename";
-            $fullmessage = "<p>" . get_string('download', 'core') . " : ";
-            $fullmessage .= "<a href=\"$path\" download><i class=\"fa fa-download\"></i>$filename</a></p>";
-            $smallmessage = get_string('messageprovider:report_created', 'local_log_sender');
-
-            log_sender_report_notification($user, $file, $requestor, $fullmessage, $smallmessage);
-        }
+        log_sender_report_notification($user, $file, $requestor, $fullmessage, $smallmessage);
     }
 
     http_response_code(200);
     echo json_encode([
         'status' => 'success',
-        'file' => $file->get_filename(),
+        'file' => $filename,
         'download_url' => $path
     ]);
 } else {

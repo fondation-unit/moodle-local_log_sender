@@ -35,19 +35,26 @@ class request_report extends \core\task\adhoc_task {
 
     public function execute(): void {
         $data = $this->get_custom_data();
+
         if (empty($data->userid)) {
             mtrace('Missing userid');
+        }
+        if (empty($data->requestorid)) {
+            mtrace('Missing requestorid');
+        }
+        if (empty($data->startdate)) {
+            mtrace('Missing startdate');
         }
 
         mtrace("Sending userid {$data->userid} to the LRS...");
 
-        $this->send_to_lrs($data->userid);
+        $this->send_to_lrs($data->userid, $data->requestorid, $data->startdate);
     }
 
     /**
      * Sends the userid to the LRS server via POST
      */
-    private function send_to_lrs(int $userid): void {
+    private function send_to_lrs(int $userid, int $requestorid, int $startdate): void {
         global $CFG;
 
         $endpoint = get_config('local_log_sender', 'user_report_endpoint_url');
@@ -59,6 +66,8 @@ class request_report extends \core\task\adhoc_task {
         $payload = json_encode([
             'token' => get_config('local_log_sender', 'lrs_callback_token'),
             'userid' => $userid,
+            'requestorid' => $requestorid,
+            'startdate' => $startdate,
             'callbackurl' => $CFG->wwwroot . '/local/log_sender/callback.php'
         ]);
 
