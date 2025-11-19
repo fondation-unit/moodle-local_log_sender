@@ -93,7 +93,7 @@ if ($file) {
     $contextid = $context->id;
 
     // Send notification if requestor is specified
-    if ($requestor && $requestor->id != $user->id) {
+    if ($requestor) {
         $filepath = "$CFG->wwwroot/pluginfile.php/$contextid/local_log_sender/content/0/$filename";
         $fullmessage = "<p>" . get_string('download', 'core') . " : ";
         $fullmessage .= "<a href=\"$filepath\" download><i class=\"fa fa-download\"></i>$filename</a></p>";
