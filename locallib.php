@@ -115,9 +115,8 @@ function log_sender_generate_file_name($username, $startdate, $enddate) {
 }
 
 function log_sender_create_csv($user, $data, $startdate, $enddate) {
-    require_once($CFG->libdir . '/csvlib.class.php');
-
     global $CFG;
+    require_once($CFG->libdir . '/csvlib.class.php');
 
     $strstartdate = date('d-m-Y', $startdate);
     $strenddate = date('d-m-Y', $enddate);
