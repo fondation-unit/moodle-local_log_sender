@@ -37,3 +37,5 @@ $string['time_report'] = 'Time report';
 $string['messageprovider:report_created'] = 'Report created';
 $string['messageprovider:report_creation'] = 'Report creation';
 $string['period'] = 'Period';
+$string['cumulative_duration'] = 'Cumulative duration per day';
+$string['period_total_time'] = 'Total time for the period';

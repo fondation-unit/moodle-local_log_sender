@@ -70,6 +70,7 @@ function log_sender_report_notification($user, $file, $requestor, $fullmessage, 
     $message->notification = 1;
     $message->contexturl = $contexturl;
     $message->contexturlname = get_string('time_report', 'local_log_sender');
+
     // Set the file attachment.
     if ($file) {
         $message->attachment = $file;
@@ -87,6 +88,7 @@ function log_sender_report_notification($user, $file, $requestor, $fullmessage, 
  */
 function log_sender_str_to_snake_case($str, $glue = '_') {
     $str = preg_replace('/\s+/', '', $str);
+
     return ltrim(
         preg_replace_callback('/[A-Z]/', function ($matches) use ($glue) {
             return $glue . strtolower($matches[0]);
@@ -106,14 +108,16 @@ function log_sender_generate_file_name($username, $startdate, $enddate) {
     if (!$username) {
         throw new \coding_exception('Missing username');
     }
+
     return strtolower(get_string('report', 'core'))
         . '__' . log_sender_str_to_snake_case($username)
         . '__' . $startdate . '_' . $enddate . '.csv';
 }
 
 function log_sender_create_csv($user, $requestorid, $data, $startdate, $enddate) {
-    global $CFG;
     require_once($CFG->libdir . '/csvlib.class.php');
+
+    global $CFG;
 
     $strstartdate = date('d-m-Y', $startdate);
     $strenddate = date('d-m-Y', $enddate);
@@ -128,7 +132,8 @@ function log_sender_create_csv($user, $requestorid, $data, $startdate, $enddate)
     $csventries[] = array(get_string('email', 'core'), $user->email);
     $csventries[] = array(get_string('period', 'local_log_sender'), $strstartdate . ' - ' . $strenddate);
     $csventries[] = array(get_string('period_total_time', 'local_log_sender'), 0);
-    $csventries[] = array('Date', get_string('total_duration', 'local_log_sender'));
+    $csventries[] = array();
+    $csventries[] = array(get_string('date', 'core'), get_string('cumulative_duration', 'local_log_sender'));
 
     $returnstr = '';
     $len = count($data);
@@ -149,8 +154,6 @@ function log_sender_create_csv($user, $requestorid, $data, $startdate, $enddate)
 }
 
 function log_sender_write_new_file($content, $filename, $user, $requestorid) {
-    global $CFG;
-
     $context = context_system::instance();
     $contextid = $context->id;
 
