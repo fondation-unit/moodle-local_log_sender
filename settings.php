@@ -26,11 +26,11 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(dirname(__FILE__) . '/locallib.php');
 
-// Admin only can access
+// Admin only can access.
 if ($hassiteconfig) {
     $settings = new admin_settingpage('local_log_sender', get_string('pluginname', 'local_log_sender'));
 
-    // Configure the remote log endpoint
+    // Configure the remote log endpoint.
     $settings->add(new admin_setting_configtext(
         'local_log_sender/moodle_log_endpoint_url',
         get_string('settings:moodle_log_endpoint_url', 'local_log_sender'),
@@ -39,7 +39,7 @@ if ($hassiteconfig) {
         PARAM_URL
     ));
 
-    // Configure the remote log endpoint
+    // Configure the remote log endpoint.
     $settings->add(new admin_setting_configtext(
         'local_log_sender/user_report_endpoint_url',
         get_string('settings:user_report_endpoint_url', 'local_log_sender'),
@@ -48,7 +48,7 @@ if ($hassiteconfig) {
         PARAM_URL
     ));
 
-    // Log targets
+    // Log targets.
     $targets = log_sender_get_log_targets();
     $defaulttargets = array_keys($targets);
 
@@ -60,13 +60,29 @@ if ($hassiteconfig) {
         $targets
     ));
 
-    // LRS token
+    // LRS token.
     $settings->add(new admin_setting_configtext(
         'local_log_sender/lrs_callback_token',
         get_string('settings:lrs_callback_token', 'local_log_sender'),
         get_string('settings:lrs_callback_token_desc', 'local_log_sender'),
         '',
         PARAM_ALPHANUMEXT
+    ));
+
+    // Idle time.
+    $settings->add(new admin_setting_configduration(
+        'local_log_sender/idletime',
+        get_string('settings:idletime', 'local_log_sender'),
+        get_string('settings:idletime_desc', 'local_log_sender'),
+        15 * MINSECS
+    ));
+
+    // Borrowed time when idle.
+    $settings->add(new admin_setting_configduration(
+        'local_log_sender/borrowedtime',
+        get_string('settings:borrowedtime', 'local_log_sender'),
+        get_string('settings:borrowedtime_desc', 'local_log_sender'),
+        15 * MINSECS
     ));
 
     $ADMIN->add('localplugins', $settings);
