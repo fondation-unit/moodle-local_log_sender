@@ -114,7 +114,7 @@ function log_sender_generate_file_name($username, $startdate, $enddate) {
         . '__' . $startdate . '_' . $enddate . '.csv';
 }
 
-function log_sender_create_csv($user, $requestorid, $data, $startdate, $enddate) {
+function log_sender_create_csv($user, $data, $startdate, $enddate) {
     require_once($CFG->libdir . '/csvlib.class.php');
 
     global $CFG;
@@ -133,7 +133,7 @@ function log_sender_create_csv($user, $requestorid, $data, $startdate, $enddate)
     $csventries[] = array(get_string('period', 'local_log_sender'), $strstartdate . ' - ' . $strenddate);
     $csventries[] = array(get_string('period_total_time', 'local_log_sender'), 0);
     $csventries[] = array();
-    $csventries[] = array(get_string('date', 'core'), get_string('cumulative_duration', 'local_log_sender'));
+    $csventries[] = array(get_string('date'), get_string('cumulative_duration', 'local_log_sender'));
 
     $returnstr = '';
     $len = count($data);
@@ -150,10 +150,10 @@ function log_sender_create_csv($user, $requestorid, $data, $startdate, $enddate)
 
     $filename = log_sender_generate_file_name(fullname($user), $strstartdate, $strenddate);
 
-    return log_sender_write_new_file($returnstr, $filename, $user, $requestorid);
+    return log_sender_write_new_file($returnstr, $filename, $user);
 }
 
-function log_sender_write_new_file($content, $filename, $user, $requestorid) {
+function log_sender_write_new_file($content, $filename, $user) {
     $context = context_system::instance();
     $contextid = $context->id;
 
