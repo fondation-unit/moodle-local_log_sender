@@ -21,11 +21,11 @@ define(['jquery',
             $('#submitdate').click(function (e) {
                 e.preventDefault();
 
-                var startDate = document.querySelector('#startInput').valueAsNumber;
-                var endDate = document.querySelector('#endInput').valueAsNumber;
-                var completion = this.checkCompletion(startDate, endDate);
+                const startDate = Math.floor(document.querySelector('#start-input').valueAsNumber / 1000);
+                const endDate = Math.floor(document.querySelector('#end-input').valueAsNumber / 1000);
+                const completion = this.checkCompletion(startDate, endDate);
 
-                var icon = $('<img/>');
+                const icon = $('<img/>');
                 icon.attr('alt', 'loading');
                 icon.attr('title', 'loading');
                 icon.attr('class', 'local_log_sender_icon loader');
@@ -46,6 +46,7 @@ define(['jquery',
                     end: endDate,
                     contextid: this.contextId
                 };
+
                 this.formdata = formdata;
 
                 Ajax.call([{
@@ -56,8 +57,10 @@ define(['jquery',
                             $('#report-area').addClass('alert-warning')
                                 .html(str).prepend(icon);
                         });
+
                         var that = this;
-                        (function foo() {
+
+                        (function _poll() {
                             that.polling = setInterval(pollFile.bind(that), 7500);
                         })();
                     }.bind(this),
@@ -74,7 +77,7 @@ define(['jquery',
         };
 
         var pollFile = function () {
-            var dlicon = $('<img/>');
+            const dlicon = $('<img/>');
             dlicon.attr('alt', 'download');
             dlicon.attr('title', 'download');
             dlicon.attr('class', 'local_log_sender_icon');
@@ -90,6 +93,7 @@ define(['jquery',
                             $('#report-area').removeClass('alert-warning').addClass('alert-success')
                                 .html(content);
                         });
+
                         clearInterval(this.polling);
                         return;
                     }
