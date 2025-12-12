@@ -84,16 +84,22 @@ class external extends external_api {
             $file->delete();
         }
 
-        $adhocktask = new \local_log_sender\task\generate_time_report();
-        $adhocktask->set_custom_data(array(
+        $idletime = get_config('local_log_sender', 'idletime') / MINSECS;
+        $borrowedtime = get_config('local_log_sender', 'borrowedtime') / MINSECS;
+
+        $task = new \local_log_sender\task\request_report();
+        $task->set_custom_data((object)[
             'requestorid' => $serialiseddata['requestorid'],
             'userid' => $serialiseddata['userid'],
-            'start' => $serialiseddata['start'],
-            'end' => $serialiseddata['end'],
-            'contextid' => $serialiseddata['contextid']
-        ));
+            'startdate' => $serialiseddata['start'],
+            'enddate' => $serialiseddata['end'],
+            'idletime' => intval($idletime),
+            'borrowedtime' => intval($borrowedtime)
+        ]);
 
-        \core\task\manager::queue_adhoc_task($adhocktask, true);
+        // Queue the task and check for existing (bool).
+        \core\task\manager::queue_adhoc_task($task, true);
+
         return true;
     }
 
