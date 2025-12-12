@@ -67,7 +67,7 @@ if ($isadmin && !$availableonadmins) {
 
 // Rendering.
 $context = \context_system::instance();
-$reportfiles = get_reports_urls($context->id, $user->id);
+$reportfiles = log_sender_get_reports_urls($context->id, $user->id);
 $renderable = new \local_log_sender\output\get_report($USER->id, $user->id, fullname($user), $context->id, $reportfiles);
 $output = $PAGE->get_renderer('local_log_sender');
 

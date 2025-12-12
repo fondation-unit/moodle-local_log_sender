@@ -185,3 +185,36 @@ function log_sender_write_new_file($content, $filename, $user) {
 
     return $file;
 }
+
+/**
+ * Retrives the files of existing reports
+ *
+ * @return Array of moodle_url
+ */
+function log_sender_get_reports_files($contextid, $userid) {
+    global $DB;
+
+    $conditions = array('contextid' => $contextid, 'component' => 'local_log_sender', 'filearea' => 'content', 'userid' => $userid);
+    $filerecords = $DB->get_records('files', $conditions);
+    return $filerecords;
+}
+
+/**
+ * Retrives the moodle_url of existing reports
+ *
+ * @return Array of moodle_url
+ */
+function log_sender_get_reports_urls($contextid, $userid) {
+    $files = log_sender_get_reports_files($contextid, $userid);
+    $out = array();
+
+    foreach ($files as $file) {
+        if ($file->filename != '.') {
+            $path = '/' . $file->contextid . '/local_log_sender/content/' . $file->itemid . $file->filepath . $file->filename;
+            $url = moodle_url::make_file_url('/pluginfile.php', $path);
+            array_push($out, array('url' => $url, 'filename' => $file->filename));
+        }
+    }
+
+    return $out;
+}

@@ -45,7 +45,7 @@ function local_log_sender_myprofile_navigation(tree $tree, $user, $iscurrentuser
 
     // Context.
     $context = context_system::instance();
-    if ($course->id != 0) {
+    if (isset($course) && $course->id != 0) {
         $context = context_course::instance($course->id);
     }
 
