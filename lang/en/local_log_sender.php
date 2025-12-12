@@ -51,3 +51,4 @@ $string['reports_list'] = 'Generated reports list';
 $string['no_results_found'] = 'No results found';
 $string['remove_files'] = 'Remove files';
 $string['error:completiondates'] = 'Enter the start and end dates.';
+$string['client:reportgenerating'] = 'Report generating...';
