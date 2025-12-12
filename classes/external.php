@@ -93,8 +93,8 @@ class external extends external_api {
 
         $task = new \local_log_sender\task\request_report();
         $task->set_custom_data((object)[
-            'requestorid' => $serialiseddata['requestorid'],
             'userid' => $serialiseddata['userid'],
+            'requestorid' => $serialiseddata['requestorid'],
             'startdate' => $serialiseddata['startdate'],
             'enddate' => $serialiseddata['enddate'],
             'idletime' => intval($idletime),
