@@ -42,8 +42,8 @@ define(['jquery',
                     requestorid: this.requestorId,
                     userid: this.userId,
                     username: this.userName,
-                    start: startDate,
-                    end: endDate,
+                    startdate: startDate,
+                    enddate: endDate,
                     contextid: this.contextId
                 };
 

@@ -91,8 +91,8 @@ class external extends external_api {
         $task->set_custom_data((object)[
             'requestorid' => $serialiseddata['requestorid'],
             'userid' => $serialiseddata['userid'],
-            'startdate' => $serialiseddata['start'],
-            'enddate' => $serialiseddata['end'],
+            'startdate' => $serialiseddata['startdate'],
+            'enddate' => $serialiseddata['enddate'],
             'idletime' => intval($idletime),
             'borrowedtime' => intval($borrowedtime)
         ]);
