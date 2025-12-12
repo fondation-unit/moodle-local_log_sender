@@ -66,8 +66,8 @@ class external extends external_api {
             throw new \coding_exception('Missing contextid or userid parameters');
         }
 
-        $strstartdate = generate_date_from_jstimestamp($serialiseddata['start']);
-        $strenddate = generate_date_from_jstimestamp($serialiseddata['end']);
+        $strstartdate = log_sender_date_from_jstimestamp($serialiseddata['start']);
+        $strenddate = log_sender_date_from_jstimestamp($serialiseddata['end']);
 
         $fs = get_file_storage();
         $file = $fs->get_file(
@@ -145,8 +145,8 @@ class external extends external_api {
         $contextid = $serialiseddata['contextid'];
         $userid = $serialiseddata['userid'];
 
-        $strstartdate = generate_date_from_jstimestamp($serialiseddata['start']);
-        $strenddate = generate_date_from_jstimestamp($serialiseddata['end']);
+        $strstartdate = log_sender_date_from_jstimestamp($serialiseddata['start']);
+        $strenddate = log_sender_date_from_jstimestamp($serialiseddata['end']);
 
         $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
         if ($user) {

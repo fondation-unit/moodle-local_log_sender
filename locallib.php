@@ -218,3 +218,12 @@ function log_sender_get_reports_urls($contextid, $userid) {
 
     return $out;
 }
+
+/**
+ * Returns a 'd-m-Y' date from Javascript timestamp format.
+ *
+ * @return String
+ */
+function log_sender_date_from_jstimestamp($timestamp) {
+    return date('d-m-Y', $timestamp / 1000);
+}
