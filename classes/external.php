@@ -66,8 +66,12 @@ class external extends external_api {
             throw new \coding_exception('Missing contextid or userid parameters');
         }
 
-        $strstartdate = log_sender_date_from_jstimestamp($serialiseddata['start']);
-        $strenddate = log_sender_date_from_jstimestamp($serialiseddata['end']);
+        $strstartdate = log_sender_date_from_jstimestamp($serialiseddata['startdate']);
+        $strenddate = log_sender_date_from_jstimestamp($serialiseddata['enddate']);
+
+        if (!$strstartdate || !$strenddate) {
+            throw new \coding_exception('Missing startdate or enddate parameters');
+        }
 
         $fs = get_file_storage();
         $file = $fs->get_file(
