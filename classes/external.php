@@ -76,7 +76,7 @@ class external extends external_api {
             'content',
             '0',
             '/',
-            generate_file_name($serialiseddata['username'], $strstartdate, $strenddate)
+            log_sender_generate_file_name($serialiseddata['username'], $strstartdate, $strenddate)
         );
 
         if ($file) {
@@ -151,7 +151,7 @@ class external extends external_api {
         $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
         if ($user) {
             $fs = get_file_storage();
-            $filename = generate_file_name(fullname($user), $strstartdate, $strenddate);
+            $filename = log_sender_generate_file_name(fullname($user), $strstartdate, $strenddate);
             $file = $fs->get_file($contextid, 'local_log_sender', 'content', '0', '/', $filename);
 
             if ($file) {
