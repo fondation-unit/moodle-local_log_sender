@@ -124,13 +124,14 @@ function log_sender_create_csv($user, $data, $startdate, $enddate) {
     // Generate CSV from data
     $delimiter = \csv_import_reader::get_delimiter('comma');
     $csventries = array(array());
+    $last = end($data);
 
     // Add header information
     $csventries[] = array(get_string('name', 'core'), $user->lastname);
     $csventries[] = array(get_string('firstname', 'core'), $user->firstname);
     $csventries[] = array(get_string('email', 'core'), $user->email);
     $csventries[] = array(get_string('period', 'local_log_sender'), $strstartdate . ' - ' . $strenddate);
-    $csventries[] = array(get_string('period_total_time', 'local_log_sender'), 0);
+    $csventries[] = array(get_string('period_total_time', 'local_log_sender'), $last->cumulativeduration);
     $csventries[] = array();
     $csventries[] = array(get_string('date'), get_string('cumulative_duration', 'local_log_sender'));
 

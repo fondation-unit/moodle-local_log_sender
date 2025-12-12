@@ -15,15 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information
+ * Log Sender plugin's renderer file.
  *
  * @package   local_log_sender
  * @copyright 2025 Pierre Duverneix {@link https://github.com/Hipjea}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace local_log_sender\output;
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_log_sender'; // Full name of the plugin (used for diagnostics).
-$plugin->version  = 2025121200;          // The current module version (Date: YYYYMMDDXX).
-$plugin->requires = 2023100903;          // Requires this Moodle version.
+use plugin_renderer_base;
+
+class renderer extends plugin_renderer_base {
+    public function render_get_report(\templatable $output) {
+        $data = $output->export_for_template($this);
+        return parent::render_from_template('local_log_sender/get_report', $data);
+    }
+}

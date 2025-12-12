@@ -85,5 +85,13 @@ if ($hassiteconfig) {
         15 * MINSECS
     ));
 
+    // Make the report available on admin profiles.
+    $settings->add(new admin_setting_configcheckbox(
+        'local_log_sender/available_on_admins',
+        get_string('settings:available_on_admins', 'local_log_sender'),
+        get_string('settings:available_on_admins_desc', 'local_log_sender'),
+        1
+    ));
+
     $ADMIN->add('localplugins', $settings);
 }
