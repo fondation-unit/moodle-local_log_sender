@@ -66,6 +66,14 @@ class get_report implements renderable, templatable {
     public function export_for_template(renderer_base $output) {
         global $CFG, $PAGE;
 
+        $PAGE->requires->js_call_amd('local_log_sender/generate_report', 'generateReport', [
+            $this->requestorid,
+            $this->userid,
+            $this->username,
+            $this->contextid,
+            $this->reportfiles
+        ]);
+
         return [
             'requestorid' => $this->requestorid,
             'userid' => $this->userid,
