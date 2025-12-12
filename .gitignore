@@ -476,3 +476,5 @@ composer.lock
 test.php
 feed.php
 lrs_callback.json
+
+!amd/build
