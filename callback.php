@@ -108,27 +108,25 @@ if (!$startdate) {
 
 // Create new file
 $file = log_sender_create_csv($user, $payload, $startdate, $enddate);
+$storedfile = local_log_sender_get_file($user, $startdate, $enddate);
 
-if ($file) {
-    $filename = $file->get_filename();
-    $context = context_system::instance();
-    $contextid = $context->id;
+if ($storedfile) {
+    $filename = $storedfile->get_filename();
+    $filepath = local_log_sender_get_file_url($contextid, $user->id, $filename);
 
-    // Send notification if requestor is specified
     if ($requestor) {
-        $filepath = local_log_sender_get_file_url($contextid, $user->id, $filename);
         $fullmessage = "<p>" . get_string('download', 'core') . " : ";
         $fullmessage .= "<a href=\"$filepath\" download><i class=\"fa fa-download\"></i>$filename</a></p>";
         $smallmessage = get_string('messageprovider:report_created', 'local_log_sender');
 
-        log_sender_report_notification($user, $file, $requestor, $fullmessage, $smallmessage);
+        log_sender_report_notification($user, $storedfile, $requestor, $fullmessage, $smallmessage);
     }
 
     http_response_code(200);
     echo json_encode([
         'status' => 'success',
         'file' => $filename,
-        'download_url' => $path
+        'download_url' => $filepath
     ]);
 } else {
     http_response_code(500);
