@@ -234,7 +234,7 @@ function log_sender_date_from_jstimestamp($timestamp) {
  * @return int
  */
 function log_sender_remove_reports_files($contextid, $userid) {
-    $files = get_reports_files($contextid, $userid);
+    $files = log_sender_get_reports_files($contextid, $userid);
 
     foreach ($files as $file) {
         $fs = log_sender_get_file_storage();
