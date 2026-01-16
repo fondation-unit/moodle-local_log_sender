@@ -116,15 +116,7 @@ if ($file) {
 
     // Send notification if requestor is specified
     if ($requestor) {
-        $filepath = moodle_url::make_pluginfile_url(
-            $contextid,
-            'local_log_sender',
-            'content',
-            $user->id,
-            '/',
-            $filename
-        );
-
+        $filepath = local_log_sender_get_file_url($contextid, $user->id, $filename);
         $fullmessage = "<p>" . get_string('download', 'core') . " : ";
         $fullmessage .= "<a href=\"$filepath\" download><i class=\"fa fa-download\"></i>$filename</a></p>";
         $smallmessage = get_string('messageprovider:report_created', 'local_log_sender');

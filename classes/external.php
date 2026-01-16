@@ -172,7 +172,7 @@ class external extends external_api {
             );
 
             if ($file) {
-                $return->path = "$CFG->wwwroot/pluginfile.php/$contextid/local_log_sender/content/0/$filename";
+                $return->path = local_log_sender_get_file_url($contextid, $user->id, $filename);
                 $return->status = true;
             }
         } else {

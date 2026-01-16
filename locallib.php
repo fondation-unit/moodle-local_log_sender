@@ -252,3 +252,23 @@ function log_sender_remove_reports_files($contextid, $userid) {
         }
     }
 }
+
+/**
+ * Get pluginfile URL for a log_sender file
+ *
+ * @param int $contextid
+ * @param int $userid Itemid (usually user id)
+ * @param string $filename
+ * @param string $filearea Defaults to 'content'
+ * @return moodle_url
+ */
+function local_log_sender_get_file_url($contextid, $userid, $filename, $filearea = 'content') {
+    return moodle_url::make_pluginfile_url(
+        $contextid,
+        'local_log_sender',
+        $filearea,
+        $userid,
+        '/',
+        $filename
+    );
+}
