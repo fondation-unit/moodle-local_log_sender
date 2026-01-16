@@ -193,7 +193,7 @@ function log_sender_write_new_file($content, $filename, $user) {
 function log_sender_get_reports_files($contextid, $userid) {
     global $DB;
 
-    $conditions = array('contextid' => $contextid, 'component' => 'local_log_sender', 'filearea' => 'content', 'userid' => $userid);
+    $conditions = array('contextid' => $contextid, 'component' => 'local_log_sender', 'filearea' => 'content', 'itemid' => $userid);
     $filerecords = $DB->get_records('files', $conditions);
     return $filerecords;
 }
