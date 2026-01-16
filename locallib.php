@@ -135,7 +135,7 @@ function log_sender_create_csv($user, $data, $startdate, $enddate) {
     $csventries[] = array();
     $csventries[] = array(get_string('date'), get_string('cumulative_duration', 'local_log_sender'));
 
-    $returnstr = '';
+    $filecontent = '';
     $len = count($data);
     $shift = count($csventries);
 
@@ -145,12 +145,12 @@ function log_sender_create_csv($user, $data, $startdate, $enddate) {
     }
 
     foreach ($csventries as $entry) {
-        $returnstr .= '"' . implode('"' . $delimiter . '"', $entry) . '"' . "\n";
+        $filecontent .= '"' . implode('"' . $delimiter . '"', $entry) . '"' . "\n";
     }
 
     $filename = log_sender_generate_file_name(fullname($user), $strstartdate, $strenddate);
 
-    return log_sender_write_new_file($returnstr, $filename, $user);
+    return log_sender_write_new_file($filecontent, $filename, $user);
 }
 
 function log_sender_write_new_file($content, $filename, $user) {
@@ -162,10 +162,9 @@ function log_sender_write_new_file($content, $filename, $user) {
         'contextid' => $contextid,
         'component' => 'local_log_sender',
         'filearea' => 'content',
-        'itemid' => 0,
+        'itemid' => $user->id,
         'filepath' => '/',
-        'filename' => $filename,
-        'userid' => $user->id
+        'filename' => $filename
     );
 
     $file = $fs->get_file(

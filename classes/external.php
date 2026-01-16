@@ -78,7 +78,7 @@ class external extends external_api {
             $serialiseddata['contextid'],
             'local_log_sender',
             'content',
-            '0',
+            $serialiseddata['userid'],
             '/',
             log_sender_generate_file_name($serialiseddata['username'], $strstartdate, $strenddate)
         );

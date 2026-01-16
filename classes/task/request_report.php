@@ -49,15 +49,15 @@ class request_report extends \core\task\adhoc_task {
             mtrace('Missing enddate');
         }
 
-        mtrace("Sending userid {$data->userid} to the LRS...");
+        mtrace("Sending userid {$data->userid} to the log server...");
 
-        $this->send_to_lrs($data->userid, $data->requestorid, $data->startdate, $data->enddate, $data->idletime, $data->borrowedtime);
+        $this->send_to_log_server($data->userid, $data->requestorid, $data->startdate, $data->enddate, $data->idletime, $data->borrowedtime);
     }
 
     /**
-     * Sends the userid to the LRS server via POST
+     * Sends the userid to the log server via POST
      */
-    private function send_to_lrs(int $userid, int $requestorid, int $startdate, int $enddate, int $idletime = 0, int $borrowedtime = 0): void {
+    private function send_to_log_server(int $userid, int $requestorid, int $startdate, int $enddate, int $idletime = 0, int $borrowedtime = 0): void {
         global $CFG;
 
         $endpoint = get_config('local_log_sender', 'user_report_endpoint_url');
@@ -89,9 +89,9 @@ class request_report extends \core\task\adhoc_task {
         $response = $curl->post($endpoint, $payload, $options);
 
         if ($response === false) {
-            mtrace("Failed to send userid to the LRS.");
+            mtrace("Failed to send userid to the log server.");
         } else {
-            mtrace("LRS response: " . $response);
+            mtrace("Log server response: " . $response);
         }
     }
 }
