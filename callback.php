@@ -107,12 +107,13 @@ if (!$startdate) {
 }
 
 // Create new file
+$context = context_system::instance();
 $file = log_sender_create_csv($user, $payload, $startdate, $enddate);
 $storedfile = local_log_sender_get_file($user, $startdate, $enddate);
 
 if ($storedfile) {
     $filename = $storedfile->get_filename();
-    $filepath = local_log_sender_get_file_url($contextid, $user->id, $filename);
+    $filepath = local_log_sender_get_file_url($context->id, $user->id, $filename);
 
     if ($requestor) {
         $fullmessage = "<p>" . get_string('download', 'core') . " : ";
