@@ -60,11 +60,11 @@ if ($hassiteconfig) {
         $targets
     ));
 
-    // LRS token.
+    // Log server token.
     $settings->add(new admin_setting_configtext(
-        'local_log_sender/lrs_callback_token',
-        get_string('settings:lrs_callback_token', 'local_log_sender'),
-        get_string('settings:lrs_callback_token_desc', 'local_log_sender'),
+        'local_log_sender/log_server_callback_token',
+        get_string('settings:log_server_callback_token', 'local_log_sender'),
+        get_string('settings:log_server_callback_token_desc', 'local_log_sender'),
         '',
         PARAM_ALPHANUMEXT
     ));

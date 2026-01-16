@@ -67,7 +67,7 @@ class request_report extends \core\task\adhoc_task {
         }
 
         $payload = json_encode([
-            'token' => get_config('local_log_sender', 'lrs_callback_token'),
+            'token' => get_config('local_log_sender', 'log_server_callback_token'),
             'userid' => $userid,
             'requestorid' => $requestorid,
             'startdate' => $startdate,

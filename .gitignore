@@ -475,6 +475,6 @@ composer.lock
 ##### Custom
 test.php
 feed.php
-lrs_callback.json
+log_server_callback.json
 
 !amd/build

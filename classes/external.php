@@ -155,8 +155,8 @@ class external extends external_api {
         $contextid = $serialiseddata['contextid'];
         $userid = $serialiseddata['userid'];
 
-        $strstartdate = log_sender_date_from_jstimestamp($serialiseddata['start']);
-        $strenddate = log_sender_date_from_jstimestamp($serialiseddata['end']);
+        $strstartdate = log_sender_date_from_jstimestamp($serialiseddata['startdate']);
+        $strenddate = log_sender_date_from_jstimestamp($serialiseddata['enddate']);
 
         $user = $DB->get_record('user', array('id' => $userid), '*', MUST_EXIST);
         if ($user) {

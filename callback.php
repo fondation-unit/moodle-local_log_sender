@@ -52,7 +52,7 @@ if (json_last_error() !== JSON_ERROR_NONE) {
 
 // Verify token
 $token = $data->token ?? '';
-$expected = get_config('local_log_sender', 'lrs_callback_token');
+$expected = get_config('local_log_sender', 'log_server_callback_token');
 
 if (empty($expected)) {
     http_response_code(500);
