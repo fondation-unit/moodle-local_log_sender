@@ -246,6 +246,7 @@ function log_sender_remove_reports_files($contextid, $userid) {
             $file->filepath,
             $file->filename
         );
+
         if ($file) {
             $file->delete();
         }
