@@ -162,14 +162,21 @@ class external extends external_api {
         if ($user) {
             $fs = get_file_storage();
             $filename = log_sender_generate_file_name(fullname($user), $strstartdate, $strenddate);
-            $file = $fs->get_file($contextid, 'local_log_sender', 'content', '0', '/', $filename);
+            $file = $fs->get_file(
+                $contextid,
+                'local_log_sender',
+                'content',
+                $serialiseddata['userid'],
+                '/',
+                $filename
+            );
 
             if ($file) {
-                $return->path = "$CFG->wwwroot/pluginfile.php/$contextid/local_log_sender/content/0/$filename";
+                $return->path = local_log_sender_get_file_url($contextid, $user->id, $filename);
                 $return->status = true;
             }
         } else {
-            \core\notification::error('Utilisateur non existant (id : ' . $userid . ')');
+            \core\notification::error('User does not exist (id : ' . $userid . ')');
         }
 
         return $return;

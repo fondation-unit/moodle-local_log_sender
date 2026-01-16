@@ -193,7 +193,7 @@ function log_sender_write_new_file($content, $filename, $user) {
 function log_sender_get_reports_files($contextid, $userid) {
     global $DB;
 
-    $conditions = array('contextid' => $contextid, 'component' => 'local_log_sender', 'filearea' => 'content', 'userid' => $userid);
+    $conditions = array('contextid' => $contextid, 'component' => 'local_log_sender', 'filearea' => 'content', 'itemid' => $userid);
     $filerecords = $DB->get_records('files', $conditions);
     return $filerecords;
 }
@@ -246,8 +246,52 @@ function log_sender_remove_reports_files($contextid, $userid) {
             $file->filepath,
             $file->filename
         );
+
         if ($file) {
             $file->delete();
         }
     }
+}
+
+/**
+ * Get pluginfile URL for a log_sender file
+ *
+ * @param int $contextid
+ * @param int $userid Itemid (usually user id)
+ * @param string $filename
+ * @param string $filearea Defaults to 'content'
+ * @return moodle_url
+ */
+function local_log_sender_get_file_url($contextid, $userid, $filename, $filearea = 'content') {
+    $path = '/' . $contextid . '/local_log_sender/' . $filearea . '/' . $userid . '/' . $filename;
+    return moodle_url::make_file_url('/pluginfile.php', $path);
+}
+
+/**
+ * Retrieve an existing report file for a user.
+ *
+ * @param stdClass $user The Moodle user object.
+ * @param int $startdate Timestamp of report start date.
+ * @param int $enddate Timestamp of report end date.
+ * @return stored_file|null Returns the stored_file object or null if not found.
+ */
+function local_log_sender_get_file($user, $startdate, $enddate) {
+    $context = context_system::instance();
+
+    // Format the date strings
+    $strstartdate = date('d-m-Y', $startdate);
+    $strenddate = date('d-m-Y', $enddate);
+
+    $filename = log_sender_generate_file_name(fullname($user), $strstartdate, $strenddate);
+    $fs = get_file_storage();
+    $storedfile = $fs->get_file(
+        $context->id,
+        'local_log_sender',
+        'content',
+        $user->id,
+        '/',
+        $filename
+    );
+
+    return $storedfile;
 }
