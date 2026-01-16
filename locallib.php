@@ -263,14 +263,8 @@ function log_sender_remove_reports_files($contextid, $userid) {
  * @return moodle_url
  */
 function local_log_sender_get_file_url($contextid, $userid, $filename, $filearea = 'content') {
-    return moodle_url::make_pluginfile_url(
-        $contextid,
-        'local_log_sender',
-        $filearea,
-        $userid,
-        '/',
-        $filename
-    );
+    $path = '/' . $contextid . '/local_log_sender/' . $filearea . '/' . $userid . '/' . $filename;
+    return moodle_url::make_file_url('/pluginfile.php', $path);
 }
 
 /**
