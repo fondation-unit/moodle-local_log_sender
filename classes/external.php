@@ -176,7 +176,7 @@ class external extends external_api {
                 $return->status = true;
             }
         } else {
-            \core\notification::error('Utilisateur non existant (id : ' . $userid . ')');
+            \core\notification::error('User does not exist (id : ' . $userid . ')');
         }
 
         return $return;
