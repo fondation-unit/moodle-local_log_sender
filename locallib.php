@@ -225,5 +225,5 @@ function log_sender_get_reports_urls($contextid, $userid) {
  * @return String
  */
 function log_sender_date_from_jstimestamp($timestamp) {
-    return date('d-m-Y', $timestamp / 1000);
+    return date('d-m-Y', (int) ($timestamp / 1000));
 }
