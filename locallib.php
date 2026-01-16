@@ -237,7 +237,7 @@ function log_sender_remove_reports_files($contextid, $userid) {
     $files = log_sender_get_reports_files($contextid, $userid);
 
     foreach ($files as $file) {
-        $fs = log_sender_get_file_storage();
+        $fs = get_file_storage();
         $file = $fs->get_file(
             $file->contextid,
             $file->component,
