@@ -226,3 +226,28 @@ function log_sender_get_reports_urls($contextid, $userid) {
 function log_sender_date_from_jstimestamp($timestamp) {
     return date('d-m-Y', (int) ($timestamp / 1000));
 }
+
+/**
+ * Removes the report files for a given user.
+ *
+ * @param  string $filename
+ * @return int
+ */
+function log_sender_remove_reports_files($contextid, $userid) {
+    $files = get_reports_files($contextid, $userid);
+
+    foreach ($files as $file) {
+        $fs = log_sender_get_file_storage();
+        $file = $fs->get_file(
+            $file->contextid,
+            $file->component,
+            $file->filearea,
+            $file->itemid,
+            $file->filepath,
+            $file->filename
+        );
+        if ($file) {
+            $file->delete();
+        }
+    }
+}

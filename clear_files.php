@@ -39,5 +39,5 @@ if (!has_capability('local/log_sender:view', $personalcontext)) {
 
 $context = \context_system::instance();
 
-remove_reports_files($context->id, $user->id);
+log_sender_remove_reports_files($context->id, $user->id);
 redirect("$CFG->wwwroot/local/log_sender/time_report.php?userid=$user->id");
