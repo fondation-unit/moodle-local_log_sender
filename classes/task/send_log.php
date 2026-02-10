@@ -147,6 +147,8 @@ class send_log extends \core\task\scheduled_task {
                             'name' => $course->fullname,
                             'description' => $course->summary,
                         ];
+                    } else {
+                        $log->activity_definition = null;
                     }
                     break;
 
@@ -154,7 +156,7 @@ class send_log extends \core\task\scheduled_task {
                     break;
 
                 default:
-                    // ignore
+                    $log->activity_definition = null;
             }
         }
 
