@@ -110,16 +110,52 @@ class send_log extends \core\task\scheduled_task {
             return [];
         }
 
-        // Get all users in ONE query
+        // Get all users
         $userids = array_unique(array_column($logs, 'userid'));
         list($usersql, $userparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $users = $DB->get_records_select('user', "id $usersql", $userparams, '', 'id,email,username');
 
+        // Get all courses
+        $courseids = array_unique(array_filter(array_column($logs, 'courseid')));
+        if (!empty($courseids)) {
+            list($coursesql, $courseparams) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+            $courses = $DB->get_records_select(
+                'course',
+                "id $coursesql",
+                $courseparams,
+                '',
+                'id,fullname,shortname,summary'
+            );
+        } else {
+            $courses = [];
+        }
+
         // Attach additional user data
         foreach ($logs as $log) {
+            // User data
             $user = $users[$log->userid] ?? null;
             $log->useremail = $user->email ?? null;
             $log->username  = $user->username ?? null;
+
+            // Activity definition
+            switch ($log->contextlevel) {
+                case CONTEXT_COURSE:
+                    $course = $courses[$log->courseid] ?? null;
+                    if ($course) {
+                        $log->activity_definition = [
+                            'type' => 'course',
+                            'name' => $course->fullname,
+                            'description' => $course->summary,
+                        ];
+                    }
+                    break;
+
+                case CONTEXT_MODULE:
+                    break;
+
+                default:
+                    // ignore
+            }
         }
 
         return array_values($logs);
