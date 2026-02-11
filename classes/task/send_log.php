@@ -83,44 +83,42 @@ class send_log extends \core\task\scheduled_task {
         }
     }
 
-    private function get_next_logs($lastid, $limit) {
+    private function fetch_logs(int $lastid, int $limit): array {
         global $DB;
 
         $allowedtargets = log_sender_get_allowed_log_targets();
         $params = ['lastid' => $lastid];
-        $targetfilter = '';
+        $whereclause = "id > :lastid AND userid IS NOT NULL AND userid <> 0";
 
         if (!empty($allowedtargets)) {
-            list($targetsql, $targetparams) = $DB->get_in_or_equal($allowedtargets, SQL_PARAMS_NAMED, 'tgt');
-            $targetfilter = " AND target $targetsql";
-            $params += $targetparams;
+            list($sql, $sqlparams) = $DB->get_in_or_equal($allowedtargets, SQL_PARAMS_NAMED, 'tgt');
+            $whereclause .= " AND target $sql";
+            $params += $sqlparams;
         }
 
-        $logs = $DB->get_records_select(
+        return $DB->get_records_select(
             'logstore_standard_log',
-            "id > :lastid AND userid IS NOT NULL AND userid <> 0 $targetfilter",
+            $whereclause,
             $params,
             'id ASC',
             '*',
             0,
             $limit
         );
+    }
 
+    private function get_next_logs(int $lastid, int $limit): array {
+        $logs = $this->fetch_logs($lastid, $limit);
         if (empty($logs)) {
             return [];
         }
 
-        // Get all users in ONE query
-        $userids = array_unique(array_column($logs, 'userid'));
-        list($usersql, $userparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
-        $users = $DB->get_records_select('user', "id $usersql", $userparams, '', 'id,email,username');
+        $users    = $this->load_users($logs);
+        $courses  = $this->load_courses($logs);
+        $cms      = $this->load_course_modules($logs);
+        $modules  = $this->load_module_instances($cms);
 
-        // Attach additional user data
-        foreach ($logs as $log) {
-            $user = $users[$log->userid] ?? null;
-            $log->useremail = $user->email ?? null;
-            $log->username  = $user->username ?? null;
-        }
+        $this->attach_enriched_data($logs, $users, $courses, $modules);
 
         return array_values($logs);
     }
@@ -155,7 +153,7 @@ class send_log extends \core\task\scheduled_task {
         $response = curl_exec($ch);
         $code     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $err      = curl_error($ch);
-        curl_close($ch);
+        unset($ch);
 
         if ($err || $code < 200 || $code >= 300) {
             mtrace("HTTP error: " . ($err ?: "HTTP $code - Response: " . substr($response, 0, 200)));
@@ -163,5 +161,265 @@ class send_log extends \core\task\scheduled_task {
         }
 
         return true;
+    }
+
+    private function attach_enriched_data(
+        array &$logs,
+        array $users,
+        array $courses,
+        array $modules
+    ): void {
+        // Get Moodle's default lang to generate language maps.
+        $lang = get_config('moodle', 'lang');
+
+        foreach ($logs as $log) {
+            $user = $users[$log->userid] ?? null;
+            $log->useremail = $user->email ?? null;
+            $log->username  = $user->username ?? null;
+
+            $log->activity_definition = $this->build_activity_definition(
+                $log,
+                $courses,
+                $modules,
+                $lang
+            );
+        }
+    }
+
+    /**
+     * Build the activity definition part of an xAPI statement from a log record.
+     *
+     * This functions creates an activity definition depending on the log context level.
+     *
+     * Expected structure:
+     *
+     * $courses:
+     * [
+     *     courseid => \stdClass {
+     *         id,
+     *         fullname,
+     *         summary
+     *     },
+     *     ...
+     * ]
+     * $modules:
+     * [
+     *     cmid => [
+     *         'cmid'    => int,
+     *         'modname' => string,
+     *         'name'    => string,
+     *         'intro'   => string,
+     *         'url'     => string|null
+     *     ],
+     *     ...
+     * ]
+     *
+     * @param \stdClass $log A log record from {logstore_standard_log}.
+     * @param array<int, \stdClass> $courses Courses indexed by course ID.
+     * @param array<int, array> $modules Module data indexed by course module ID (cmid).
+     * @param string $lang Language code used as key for languages maps.
+     *
+     * @return array<string, mixed>|null Activity definition array or null if not resolvable.
+     */
+    private function build_activity_definition(
+        \stdClass $log,
+        array $courses,
+        array $modules,
+        string $lang
+    ): ?array {
+        switch ($log->contextlevel) {
+            case CONTEXT_COURSE:
+                $course = $courses[$log->courseid] ?? null;
+
+                return $course ? [
+                    'type' => 'course',
+                    'name' => [$lang => $course->fullname],
+                    'description' => [$lang => $course->summary],
+                ] : null;
+
+            case CONTEXT_MODULE:
+                $cmid = $log->contextinstanceid;
+                $module = $modules[$cmid] ?? null;
+
+                if (!$module) {
+                    return null;
+                }
+
+                $intro = $module['intro'] ?? '';
+
+                return [
+                    'type' => 'module',
+                    'name' => [$lang => $module['name']],
+                    'description' => [$lang => trim(strip_tags($intro))],
+                    'moreInfo' => $module['url'],
+                ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Load user records referenced by the given logs from {logstore_standard_log}.
+     *
+     * Returned structure:
+     * [
+     *     userid => \stdClass {
+     *         id,
+     *         email,
+     *         username
+     *     },
+     *     ...
+     * ]
+     *
+     * @param array<int, \stdClass> $logs Array of log records.
+     *
+     * @return array<int, \stdClass> Array of user records indexed by user ID.
+     */
+    private function load_users(array $logs): array {
+        global $DB;
+
+        $userids = array_unique(array_column($logs, 'userid'));
+        list($sql, $params) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+
+        return $DB->get_records_select(
+            'user',
+            "id $sql",
+            $params,
+            '',
+            'id,email,username'
+        );
+    }
+
+    /**
+     * Load course records referenced by the given logs from {logstore_standard_log}.
+     *
+     * Returned structure:
+     * [
+     *     courseid => \stdClass {
+     *         id,
+     *         fullname,
+     *         summary
+     *     },
+     *     ...
+     * ]
+     *
+     * @param array<int, \stdClass> $logs Array of log records.
+     *
+     * @return array<int, \stdClass> Array of course records indexed by course ID.
+     */
+    private function load_courses(array $logs): array {
+        global $DB;
+
+        $courseids = array_unique(array_filter(array_column($logs, 'courseid')));
+        if (empty($courseids)) {
+            return [];
+        }
+
+        list($sql, $params) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED);
+
+        return $DB->get_records_select(
+            'course',
+            "id $sql",
+            $params,
+            '',
+            'id,fullname,summary'
+        );
+    }
+
+    /**
+     * Extract course module IDs from {logstore_standard_log} logs and group them by course.
+     *
+     * This function filters the provided logs with CONTEXT_MODULE, resolves their 
+     * corresponding course_modules records and returns a structure grouped by course ID.
+     *
+     * Returned structure: [courseid => [cmid1, cmid2, ...], ...]
+     *
+     * @param array<int, \stdClass> $logs Array of log records.
+     *
+     * @return array<int, int[]> Array of cmids indexed by course ID.
+     */
+    private function load_course_modules(array $logs): array {
+        global $DB;
+
+        $cmids = array_unique(array_filter(array_map(
+            fn($log) => $log->contextlevel == CONTEXT_MODULE ? $log->contextinstanceid : null,
+            $logs
+        )));
+
+        if (empty($cmids)) {
+            return [];
+        }
+
+        list($sql, $params) = $DB->get_in_or_equal($cmids, SQL_PARAMS_NAMED);
+
+        $cms = $DB->get_records_sql("
+            SELECT
+                cm.id AS cmid,
+                cm.course
+            FROM {course_modules} cm
+            WHERE cm.id $sql
+        ", $params);
+
+        $cmidsbycourse = [];
+
+        foreach ($cms as $cm) {
+            $cmidsbycourse[$cm->course][] = $cm->cmid;
+        }
+
+        return $cmidsbycourse;
+    }
+
+    /**
+     * Load course module instances using get_fast_modinfo.
+     * 
+     * This function resolves a set of course module IDs (cmid) grouped by 
+     * course into a flat array indexed by cmid.
+     *
+     * Returned structure:
+     * [
+     *     cmid => [
+     *         'cmid'    => int,         // Course module ID
+     *         'modname' => string,      // Module type
+     *         'name'    => string,      // Activity name
+     *         'intro'   => string,      // Activity intro
+     *         'url'     => string|null, // Activity URL
+     *     ],
+     *     ...
+     * ]
+     *
+     * @param array<int, int[]> $cmidsbycourse Array indexed by course ID containing cmids.
+     *
+     * @return array<int, array{
+     *     cmid:int,
+     *     modname:string,
+     *     name:string,
+     *     intro:string,
+     *     url:?string
+     * }>
+     */
+    private function load_module_instances(array $cmidsbycourse): array {
+        $instances = [];
+
+        foreach ($cmidsbycourse as $courseid => $cmids) {
+            $modinfo = get_fast_modinfo($courseid);
+
+            foreach ($cmids as $cmid) {
+                try {
+                    $cminfo = $modinfo->get_cm($cmid);
+
+                    $instances[$cmid] = [
+                        'cmid'    => $cminfo->id,
+                        'modname' => $cminfo->modname,
+                        'name'    => $cminfo->name,
+                        'intro'   => $cminfo->intro ?? '',
+                        'url'     => $cminfo->url ? $cminfo->url->out(false) : null,
+                    ];
+                } catch (Exception $e) {
+                    // Ignore missing cm.
+                }
+            }
+        }
+
+        return $instances;
     }
 }
